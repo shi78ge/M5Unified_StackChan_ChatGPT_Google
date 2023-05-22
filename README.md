@@ -1,4 +1,17 @@
 # M5Unified_StackChan_ChatGPT_Google
+
+//しげき(shi78ge)追記  
+オリジナルは額にタッチすることで会話できますが、Key-Unitを押下することで会話できるようにカスタムしました。[Key-Unit](https://www.switch-science.com/products/8303)  
+Key-UnitをPORTAに接続して使うコードになっています。その代わりとしてサーボが使えなくなっています。  
+その他変更点は、聞き取り時間を5~6秒に延ばしています。  
+変更ファイル  
+- main.cpp
+- Audio.h
+<img src="https://github.com/shi78ge/M5Unified_StackChan_ChatGPT_Google/assets/67863963/379e13f2-e769-4779-80a8-36583b0ec0c0" width="500">    
+
+//追記ここまで 
+  
+
 Google Cloud Speech to Text を使って音声で会話できるｽﾀｯｸﾁｬﾝです。多言語対応です。
 
 [English](README_en.md)<br>
@@ -59,8 +72,8 @@ YOUR_GOOGLE_STT_APIKEY<br>
 この場合、ブラウザで"http://XXX.XXX.XXX.XXX/apikey"にアクセスし、APIキーを設定できます。<br>
 (xxxx.xxxx.xxxx.xxxxはAIスタックチャンの起動時に表示されるIPアドレスです。)<br>
 
-* ｽﾀｯｸﾁｬﾝの額にタッチすると聞き取りを開始します。<br>
-聞き取り時間は3秒程度です。<br>
+* ~ｽﾀｯｸﾁｬﾝの額にタッチすると聞き取りを開始します。~<br>
+~聞き取り時間は3秒程度です。~<br>
 
 * ブラウザで"http://xxxx.xxxx.xxxx.xxxx/role"にアクセスすると、ロールを設定できます。<br>
 (xxxx.xxxx.xxxx.xxxxはAIスタックチャンの起動時に表示されるIPアドレスです。)<br>
