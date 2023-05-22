@@ -1,4 +1,7 @@
+//しげき KEYUNITで会話できるようにカスタム実施
+
 #include <Arduino.h>
+#include <FastLED.h>
 //#include <FS.h>
 #include <SD.h>
 #include <SPIFFS.h>
@@ -27,6 +30,12 @@
 #include <deque>
 #include "CloudSpeechClient.h"
 
+//↓しげき　PORTAを使う設定にしています
+#define KEY_PIN 33 //36
+#define DATA_PIN 32  //26
+CRGB LED[1];
+uint8_t ledColor = 0;
+
 // Default LANG_CODE
 String LANG_CODE = "ja-JP";
 //String LANG_CODE = "en-US";
@@ -42,9 +51,9 @@ std::deque<String> chatHistory;
 #define WIFI_SSID "SET YOUR WIFI SSID"
 #define WIFI_PASS "SET YOUR WIFI PASS"
 #define OPENAI_APIKEY "SET YOUR OPENAI APIKEY"
-#define GOOGL_APIKEY "SET YOUR GOOGL APIKEY"
+#define VOICETEXT_APIKEY "SET YOUR VOICETEXT APIKEY"
 
-#define USE_SERVO
+//#define USE_SERVO //しげき　KEYUNITでPORTA使っているのでサーボを使わない設定にしている
 #ifdef USE_SERVO
 #if defined(ARDUINO_M5STACK_Core2)
 //  #define SERVO_PIN_X 13  //Core2 PORT C
@@ -64,6 +73,9 @@ TTS tts;
 HTTPClient http;
 WiFiClient client;
 
+
+
+
 /// set M5Speaker virtual channel (0-7)
 static constexpr uint8_t m5spk_virtual_channel = 0;
 using namespace m5avatar;
@@ -76,6 +88,10 @@ const Expression expressions_table[] = {
   Expression::Sad,
   Expression::Angry
 };
+
+ColorPalette* cps[4];
+const int cpsSize = sizeof(cps) / sizeof(ColorPalette*);
+int cpsIdx = 0;
 
 ESP32WebServer server(80);
 
@@ -587,6 +603,7 @@ void handle_setting() {
       nvs_close(nvs_handle);
     }
   }
+  volume = 10; //しげき　音量変更検討　うまくいかん
   M5.Speaker.setVolume(volume);
   M5.Speaker.setChannelVolume(m5spk_virtual_channel, volume);
   server.send(200, "text/plain", String("OK"));
@@ -652,7 +669,7 @@ void lipSync(void *args)
     float open = (float)level/15000.0;
     avatar->setMouthOpenRatio(open);
     avatar->getGaze(&gazeY, &gazeX);
-    avatar->setRotation(gazeX * 5);
+    //avatar->setRotation(gazeX * 5);
     delay(50);
   }
 }
@@ -859,6 +876,28 @@ void setup()
 
   M5.begin(cfg);
 
+  //↓しげき KEYUNIT設定
+  /* Init key pin */
+    pinMode(KEY_PIN, INPUT_PULLUP);
+    /* Init RGB led */
+    FastLED.addLeds<SK6812, DATA_PIN, GRB>(LED, 1);
+    LED[0] = CRGB::Blue;
+    FastLED.setBrightness(0);
+
+  //↓しげき　顔色変更
+  cps[0] = new ColorPalette();
+  cps[1] = new ColorPalette();
+  cps[2] = new ColorPalette();
+  cps[3] = new ColorPalette();
+  cps[1]->set(COLOR_PRIMARY, TFT_YELLOW);
+  cps[1]->set(COLOR_BACKGROUND, TFT_DARKCYAN);
+  cps[2]->set(COLOR_PRIMARY, TFT_DARKGREY);
+  cps[2]->set(COLOR_BACKGROUND, TFT_WHITE);
+  cps[3]->set(COLOR_PRIMARY, TFT_RED);
+  cps[3]->set(COLOR_BACKGROUND, TFT_PINK);
+
+  //↑しげきカスタムここまで
+
   { /// custom setting
     auto spk_cfg = M5.Speaker.config();
     /// Increasing the sample_rate will improve the sound quality instead of increasing the CPU load.
@@ -877,7 +916,7 @@ void setup()
 #ifndef USE_SDCARD
   WiFi.begin(WIFI_SSID, WIFI_PASS);
   OPENAI_API_KEY = String(OPENAI_APIKEY);
-  GOOGLE_API_KEY = String(GOOGL_APIKEY);
+  tts_user = String(VOICETEXT_APIKEY);
 #else
   /// settings
   if (SD.begin(GPIO_NUM_4, SPI, 25000000)) {
@@ -1066,6 +1105,7 @@ void setup()
   avatar.init(8); //Color Depth8
 #else
   avatar.init();
+  avatar.setColorPalette(*cps[0]);
 #endif
   avatar.addTask(lipSync, "lipSync");
   avatar.addTask(servo, "servo");
@@ -1223,14 +1263,21 @@ void loop()
 	// }
 
   M5.update();
+
+//↓ここから録音関係
 #if defined(ARDUINO_M5STACK_Core2)
   auto count = M5.Touch.getCount();
-  if (count)
+  //if (count)
+  if(!digitalRead(KEY_PIN)) //しげき
   {
-    auto t = M5.Touch.getDetail();
-    if (t.wasPressed())
+
+    //auto t = M5.Touch.getDetail();
+    //if (t.wasPressed())
     {          
-      if (box_stt.contain(t.x, t.y)&&(!mp3->isRunning()))
+      FastLED.setBrightness(255);
+      FastLED.show();
+      //avatar.setColorPalette(*cps[1]);
+      //if (box_stt.contain(t.x, t.y)&&(!mp3->isRunning()))
       {
         M5.Speaker.tone(1000, 100);
         delay(200);
@@ -1240,9 +1287,9 @@ void loop()
 #ifdef USE_SERVO
         servo_home = true;
 #endif
-        avatar.setExpression(Expression::Happy);
+        avatar.setExpression(Expression::Doubt);
         if(LANG_CODE == "ja-JP") {
-          avatar.setSpeechText("御用でしょうか？");
+          avatar.setSpeechText("なになに？");
         }else{
           avatar.setSpeechText("May I help you?");
         }
@@ -1252,8 +1299,9 @@ void loop()
         audio->Record();
         Serial.println("Record end\r\n");
         Serial.println("音声認識開始");
+        avatar.setColorPalette(*cps[0]);
         if(LANG_CODE == "ja-JP") {
-          avatar.setSpeechText("わかりました");
+          avatar.setSpeechText("りょ");
         }else{
           avatar.setSpeechText("I understand.");
         }
@@ -1288,7 +1336,7 @@ void loop()
         M5.Speaker.begin();
       }
 #ifdef USE_SERVO
-      if (box_servo.contain(t.x, t.y))
+      //if (box_servo.contain(t.x, t.y))
       {
         servo_home = !servo_home;
         M5.Speaker.tone(1000, 100);
@@ -1296,19 +1344,31 @@ void loop()
 #endif
     }
   }
+  else{
+    FastLED.setBrightness(0);
+    FastLED.show();
+  }
 #endif
+
+//↑ここまで録音関係
 
   if (M5.BtnC.wasPressed())
   {
     M5.Speaker.tone(1000, 100);
+    //avatar.setColorPalette(*cps[cpsIdx]);
+    //cpsIdx = (cpsIdx + 1) % cpsSize;
+    //delay(100);
+    
     avatar.setExpression(Expression::Happy);
     if(LANG_CODE == "ja-JP") {
       google_tts(text1,"ja-JP");
+      //google_tts(text1,"ja-JP-Standard-D"); 
     } else {
       google_tts(text2,"en-US");
     }
     avatar.setExpression(Expression::Neutral);
     Serial.println("mp3 begin");
+        
   }
 
   if(speech_text != ""){

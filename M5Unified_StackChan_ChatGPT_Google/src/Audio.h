@@ -1,6 +1,8 @@
 #ifndef _AUDIO_H
 #define _AUDIO_H
 
+#define RECORD_NUM 600 //default 300
+
 //#include "I2S.h"
 #include <Arduino.h>
 
@@ -17,7 +19,7 @@ class Audio {
   void CreateWavHeader(byte* header, int waveDataSize);
 
 public:
-  static constexpr const size_t record_number = 300;
+  static constexpr const size_t record_number = RECORD_NUM; //しげき　録音長さ変更
 //  static constexpr const size_t record_number = 256;
 //  static constexpr const size_t record_length = 200;
   static constexpr const size_t record_length = 150;
