@@ -5,6 +5,7 @@
 //#include <FS.h>
 #include <SD.h>
 #include <SPIFFS.h>
+#include <M5UnitOLED.h>
 #include <M5Unified.h>
 #include <nvs.h>
 #include <Avatar.h>
@@ -30,9 +31,9 @@
 #include <deque>
 #include "CloudSpeechClient.h"
 
-//↓しげき　PORTAを使う設定にしています
-#define KEY_PIN 33 //36
-#define DATA_PIN 32  //26
+//↓しげき　PORTBを使う設定にしています
+#define KEY_PIN 36
+#define DATA_PIN 26
 CRGB LED[1];
 uint8_t ledColor = 0;
 
@@ -428,6 +429,7 @@ void exec_chatGPT(String text) {
   serializeJson(chat_doc, json_string);
 
   response = chatGpt(json_string);
+  M5.Displays(1).printf("\nA:%s",response.c_str()); //しげき
   speech_text = response;
 //  server.send(200, "text/html", String(HEAD)+String("<body>")+response+String("</body>"));
 }
@@ -868,6 +870,7 @@ void Wifi_setup() {
 void setup()
 {
   auto cfg = M5.config();
+  
 
   cfg.external_spk = true;    /// use external speaker (SPK HAT / ATOMIC SPK)
 //cfg.external_spk_detail.omit_atomic_spk = true; // exclude ATOMIC SPK
@@ -875,6 +878,11 @@ void setup()
   cfg.internal_mic = true;
 
   M5.begin(cfg);
+
+  M5.Displays(1).setRotation(3);
+  M5.Displays(1).setFont(&fonts::lgfxJapanGothic_12);
+  M5.Displays(1).setTextColor(TFT_WHITE,TFT_BLACK);
+  //M5.Displays(1).println("こんにちは世界！こんにちは世界！こんにちは世界！こんにちは世界！こんにちは世界！こんにちは世界！こんにちは世界！こんにちは世界！");
 
   //↓しげき KEYUNIT設定
   /* Init key pin */
@@ -908,7 +916,7 @@ void setup()
   M5.Speaker.begin();
 
   Servo_setup();
-  M5.Lcd.setTextSize(2);
+  M5.Displays(0).setTextSize(2);
   Serial.println("Connecting to WiFi");
   WiFi.disconnect();
   WiFi.softAPdisconnect(true);
@@ -998,6 +1006,7 @@ void setup()
     uint32_t nvs_handle;
     if (ESP_OK == nvs_open("setting", NVS_READONLY, &nvs_handle)) {
       size_t volume;
+      volume = 10; //しげき
       nvs_get_u32(nvs_handle, "volume", &volume);
       if(volume > 255) volume = 255;
       M5.Speaker.setVolume(volume);
@@ -1015,7 +1024,7 @@ void setup()
       nvs_close(nvs_handle);
     } else {
       if (ESP_OK == nvs_open("setting", NVS_READWRITE, &nvs_handle)) {
-        size_t volume = 180;
+        size_t volume = 10; //default 180
         // LANG_CODE = "en-US";
         nvs_set_u32(nvs_handle, "volume", volume);
         nvs_set_str(nvs_handle, "lang", (char*)LANG_CODE.c_str());
@@ -1027,17 +1036,17 @@ void setup()
     }
   }
 
-  M5.Lcd.print("Connecting");
+  M5.Displays(0).print("Connecting");
   Wifi_setup();
-  M5.Lcd.println("\nConnected");
+  M5.Displays(0).println("\nConnected");
   Serial.printf_P(PSTR("Go to http://"));
-  M5.Lcd.print("Go to http://");
+  M5.Displays(0).print("Go to http://");
   Serial.println(WiFi.localIP());
-  M5.Lcd.println(WiFi.localIP());
+  M5.Displays(0).println(WiFi.localIP());
 
    if (MDNS.begin("m5stack")) {
     Serial.println("MDNS responder started");
-    M5.Lcd.println("MDNS responder started");
+    M5.Displays(0).println("MDNS responder started");
   }
   delay(1000);
   server.on("/", handleRoot);
@@ -1084,10 +1093,10 @@ void setup()
 
   server.begin();
   Serial.println("HTTP server started");
-  M5.Lcd.println("HTTP server started");  
+  M5.Displays(0).println("HTTP server started");  
   
   Serial.printf_P(PSTR("/ to control the chatGpt Server.\n"));
-  M5.Lcd.print("/ to control the chatGpt Server.\n");
+  M5.Displays(0).print("/ to control the chatGpt Server.\n");
   delay(3000);
 
   audioLogger = &Serial;
@@ -1209,6 +1218,8 @@ void loop()
 {
   static int lastms = 0;
   static int lastms1 = 0;
+  //char question[256];
+  //char answer[256];
 
   if (random_time >= 0 && millis() - lastms1 > random_time)
   {
@@ -1252,6 +1263,20 @@ void loop()
     avatar.setExpression(Expression::Neutral);
     Serial.println("mp3 begin");
   }
+
+  /*
+  if (M5.BtnB.wasPressed())
+  {
+    //avatar.stop();
+    M5.Displays(1).clear();
+    M5.Displays(1).setCursor(0,0);
+    delay(1000);
+    M5.Displays(1).print("ボタンBが押されました");
+    delay(1000);
+    M5.Displays(1).print("ボタンBが押されました");
+    //avatar.start();
+  }
+  */
 
   // if (Serial.available()) {
   //   char kstr[256];
@@ -1316,11 +1341,19 @@ void loop()
         Serial.println("音声認識終了");
         Serial.println("音声認識結果");
         if(ret != "") {
-          //M5.Lcd.println(ret);
+          //M5.Displays(0).println(ret);
+          M5.Displays(1).clear();
+          M5.Displays(1).setCursor(0,0);
+          //delay(100);
+          M5.Displays(1).printf("Q:%s",ret.c_str());
           if (!mp3->isRunning() && speech_text=="" && speech_text_buffer == "") {
             exec_chatGPT(ret);
           }
         } else {
+          M5.Displays(1).clear();
+          M5.Displays(1).setCursor(0,0);
+          //delay(100);
+          M5.Displays(1).println("音声認識失敗");
           Serial.println("音声認識失敗");
           avatar.setExpression(Expression::Sad);
           if(LANG_CODE == "ja-JP") {
@@ -1334,6 +1367,8 @@ void loop()
           avatar.setExpression(Expression::Neutral);
         }
         M5.Speaker.begin();
+        //delay(10000);
+        
       }
 #ifdef USE_SERVO
       //if (box_servo.contain(t.x, t.y))
@@ -1349,7 +1384,7 @@ void loop()
     FastLED.show();
   }
 #endif
-
+//M5.Displays(1).clear();
 //↑ここまで録音関係
 
   if (M5.BtnC.wasPressed())
