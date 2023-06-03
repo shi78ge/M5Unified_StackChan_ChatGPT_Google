@@ -1,14 +1,19 @@
 # M5Unified_StackChan_ChatGPT_Google
 
 //しげき(shi78ge)追記  
-オリジナルは額にタッチすることで会話できますが、Key-Unitを押下することで会話できるようにカスタムしました。[Key-Unit](https://www.switch-science.com/products/8303)  
-Key-UnitをPORTAに接続して使うコードになっています。その代わりとしてサーボが使えなくなっています。  
-その他変更点は、聞き取り時間を5~6秒に延ばしています。  
-変更ファイル  
-- main.cpp
-- Audio.h
-<img src="https://github.com/shi78ge/M5Unified_StackChan_ChatGPT_Google/assets/67863963/379e13f2-e769-4779-80a8-36583b0ec0c0" width="500">    
+Key-Unit押下でｽﾀｯｸﾁｬﾝに質問ができて、質問したことと回答をOLED-Unitに表示するようにしました。  
+体はレゴで作っています。[こちら](https://www.amazon.co.jp/gp/product/B07FNTTF54/ref=ppx_yo_dt_b_search_asin_image?ie=UTF8&psc=1) 
+の商品を買えば同じものが組み立てできます。  
+  
+<img src="https://github.com/shi78ge/M5Unified_StackChan_ChatGPT_Google/assets/67863963/fa0d4497-034b-4b1c-b186-5d45a96968b5" width="300">
 
+<img src="https://github.com/shi78ge/M5Unified_StackChan_ChatGPT_Google/assets/67863963/8b294bea-41da-4585-8aa1-3228334108a1" width="300">
+
+<img src=https://github.com/shi78ge/M5Unified_StackChan_ChatGPT_Google/assets/67863963/7fc69287-52d9-4a33-96cc-47436060ea1d width="300">  
+
+
+https://github.com/shi78ge/M5Unified_StackChan_ChatGPT_Google/assets/67863963/d34a1814-61ef-4f1c-9162-0ce0432dc4f7  
+  
 //追記ここまで 
   
 
